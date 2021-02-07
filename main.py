@@ -11,8 +11,12 @@ def list_folder_content_and_delete_it(dir):
     for root, dirs, files in os.walk(dir):
         for d in dirs:
             list_folder_content_and_delete_it(d)
-            logging.info(f'REMOVED: file or dir {d} at {datetime.datetime.now()}')
-            os.rmdir(d)
+            try:
+                logging.info(f'REMOVED: file or dir {d} at {datetime.datetime.now()}')
+                os.rmdir(d)
+            except OSError:
+                logging.exception(f'EXCEPTION: {d} contains files that are not old enough to be deleted. Hence, the '
+                                  f'directory remains.')
 
         for file in files:
             abs_path_file = '/'.join([root, file])
@@ -22,13 +26,13 @@ def list_folder_content_and_delete_it(dir):
 
 
 def is_file_older_than_t_days(file):
-    date_byte = subprocess.check_output(["date", "-r", file, "+%D"])
-    date_string = date_byte.decode('utf-8')
-    month, day, year = date_string.split('/')
-    date_date = datetime.date(int(year) + 2000, int(month), int(day))
+    date_as_byte = subprocess.check_output(["date", "-r", file, "+%D"])
+    date_as_string = date_as_byte.decode('utf-8')
+    month, day, year = date_as_string.split('/')
+    date_as_date = datetime.date(int(year) + 2000, int(month), int(day))
     today = datetime.datetime.today().date()
 
-    age = (today - date_date).days
+    age = (today - date_as_date).days
     return age > FILE_AGE
 
 
